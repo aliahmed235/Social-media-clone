@@ -1,0 +1,85 @@
+{
+    "info": {
+        "name": "Social Media Clone API",
+        "_postman_id": "c1234567-abcd-1234-abcd-1234567890ab",
+        "description": "Laravel Sanctum Token Auth — Signup, Login, Create Post, List Posts, Logout",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "Signup",
+            "request": {
+                "method": "POST",
+                "header": [
+                    { "key": "Accept", "value": "application/json" },
+                    { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"name\": \"Ali\",\n    \"email\": \"ali@example.com\",\n    \"password\": \"Secret123!\"\n}"
+                },
+                "url": { "raw": "http://127.0.0.1:8000/api/signup", "protocol": "http", "host": ["127.0.0.1"], "port": "8000", "path": ["api","signup"] }
+            },
+            "response": []
+        },
+        {
+            "name": "Login",
+            "request": {
+                "method": "POST",
+                "header": [
+                    { "key": "Accept", "value": "application/json" },
+                    { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"email\": \"ali@example.com\",\n    \"password\": \"Secret123!\"\n}"
+                },
+                "url": { "raw": "http://127.0.0.1:8000/api/login", "protocol": "http", "host": ["127.0.0.1"], "port": "8000", "path": ["api","login"] }
+            },
+            "response": []
+        },
+        {
+            "name": "Create Post",
+            "request": {
+                "method": "POST",
+                "header": [
+                    { "key": "Accept", "value": "application/json" },
+                    { "key": "Content-Type", "value": "application/json" },
+                    { "key": "Authorization", "value": "Bearer {{token}}" }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"title\": \"My First Post\",\n    \"body\": \"Hello World!\"\n}"
+                },
+                "url": { "raw": "http://127.0.0.1:8000/api/posts", "protocol": "http", "host": ["127.0.0.1"], "port": "8000", "path": ["api","posts"] }
+            },
+            "response": []
+        },
+        {
+            "name": "List Posts",
+            "request": {
+                "method": "GET",
+                "header": [
+                    { "key": "Accept", "value": "application/json" }
+                ],
+                "url": { "raw": "http://127.0.0.1:8000/api/posts", "protocol": "http", "host": ["127.0.0.1"], "port": "8000", "path": ["api","posts"] }
+            },
+            "response": []
+        },
+        {
+            "name": "Logout",
+            "request": {
+                "method": "POST",
+                "header": [
+                    { "key": "Accept", "value": "application/json" },
+                    { "key": "Authorization", "value": "Bearer {{token}}" }
+                ],
+                "url": { "raw": "http://127.0.0.1:8000/api/logout", "protocol": "http", "host": ["127.0.0.1"], "port": "8000", "path": ["api","logout"] }
+            },
+            "response": []
+        }
+    ],
+    "variable": [
+        { "key": "token", "value": "" }
+    ]
+}
