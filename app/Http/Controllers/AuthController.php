@@ -16,7 +16,7 @@ class AuthController extends Controller
             'password' => ['required','string','min:8'],
         ]);
 
-        $user  = User::create($data);                       // password auto-hashed by casts
+        $user  = User::create($data);
         $token = $user->createToken('api-token')->plainTextToken;
 
         return response()->json(['user' => $user, 'token' => $token], 201);
