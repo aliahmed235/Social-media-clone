@@ -1,13 +1,29 @@
 <?php
-
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PostController;
+use App\Models\Post;
 
-Route::post('/signup', [AuthController::class, 'signup']);   // public → returns token
-Route::post('/login',  [AuthController::class, 'login']);    // public → returns token
+// routes/api.php
+Route::post('/signup', [AuthController::class, 'signup']);
+Route::post('/login',  [AuthController::class, 'login']);
 
-Route::get('/posts',   [PostController::class, 'index']);    // public
-Route::post('/posts',  [PostController::class, 'store'])     // needs Bearer token
-->middleware('auth:sanctum');
+Route::get('/posts',        [PostController::class, 'index']);
+Route::get('/posts/{post}', [PostController::class, 'show']);
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/posts', [PostController::class, 'store'])
+        ->middleware('can:create,' . Post::class);
+
+    Route::match(['put','patch'], '/posts/{post}', [PostController::class, 'update'])
+        ->middleware('can:update,post');
+
+    Route::delete('/posts/{post}', [PostController::class, 'destroy'])
+        ->middleware('can:delete,post');
+
+    Route::post('/posts/{post}/restore', [PostController::class, 'restore'])
+        ->withTrashed()
+        ->middleware('can:update,post');
+
+    Route::post('/logout', [AuthController::class, 'logout']); // in group, no extra middleware needed
+});

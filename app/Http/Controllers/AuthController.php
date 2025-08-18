@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Resources\PostResource;
 
 class AuthController extends Controller
 {
@@ -38,4 +39,11 @@ class AuthController extends Controller
 
         return response()->json(['user' => $user, 'token' => $token]);
     }
+    public function logout(\Illuminate\Http\Request $request)
+    {
+        $request->user()->currentAccessToken()->delete(); // revoke only this token
+        return response()->json(['message' => 'Logged out']);
+    }
+
+
 }

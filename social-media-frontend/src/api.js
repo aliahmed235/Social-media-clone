@@ -1,21 +1,36 @@
-// src/api.js
 import axios from "axios";
 
+// Prefer Vite proxy in dev (no CORS). Fallback to env/base for prod.
+const baseURL =
+    (import.meta.env.MODE === "development" ? "/api" : null) ||
+    import.meta.env.VITE_API_BASE ||
+    "http://127.0.0.1:8000/api";
+
 const api = axios.create({
-    baseURL: "http://127.0.0.1:8000", // your Laravel server
+    baseURL,
     headers: { Accept: "application/json" },
 });
 
-// Simple token storage
-export const setToken = (t) => {
-    localStorage.setItem("token", t);
-    api.defaults.headers.common.Authorization = `Bearer ${t}`;
-};
+// Attach Sanctum Personal Access Token
+api.interceptors.request.use((cfg) => {
+    const token = localStorage.getItem("token");
+    cfg.headers = cfg.headers ?? {};
+    if (token) cfg.headers.Authorization = `Bearer ${token}`;
+    return cfg;
+});
 
-export const getToken = () => localStorage.getItem("token");
-
-// Load token on refresh (if present)
-const existing = getToken();
-if (existing) api.defaults.headers.common.Authorization = `Bearer ${existing}`;
+// Basic global error handling
+api.interceptors.response.use(
+    (res) => res,
+    (err) => {
+        const s = err?.response?.status;
+        if (s === 401) {
+            localStorage.removeItem("token");
+            localStorage.removeItem("user");
+        }
+        if (s === 403) alert("Forbidden");
+        return Promise.reject(err);
+    }
+);
 
 export default api;

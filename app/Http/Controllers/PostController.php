@@ -2,31 +2,56 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Post;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use App\Http\Requests\StorePostRequest;
+use App\Http\Requests\UpdatePostRequest;
+use App\Http\Resources\PostResource;
 
 class PostController extends Controller
 {
-    // GET /api/posts  (public)
+    use AuthorizesRequests;
+
     public function index()
     {
-        return Post::latest()->get();
+        return PostResource::collection(Post::latest()->paginate(10));
     }
 
-    // POST /api/posts  (requires Bearer token via auth:sanctum)
-    public function store(Request $request)
+    public function show(Post $post)
     {
-        $data = $request->validate([
-            'title' => ['required','string','max:120'],
-            'body'  => ['required','string'],
-        ]);
-
-        $post = Post::create([
-            'user_id' => $request->user()->id, // from token
-            'title'   => $data['title'],
-            'body'    => $data['body'],
-        ]);
-
-        return response()->json($post, 201);
+        return new PostResource($post);
     }
+    public function store(StorePostRequest $request)
+    {
+        $post = Post::create([
+            'user_id' => $request->user()->id,
+            ...$request->validated(),
+        ]);
+
+        return (new PostResource($post))
+            ->response()
+            ->setStatusCode(201);
+    }
+
+    public function update(UpdatePostRequest $request, Post $post)
+    {
+        $post->update($request->validated());
+        return new PostResource($post);
+    }
+
+
+    public function destroy(Post $post)
+    {
+        $post->delete();
+        return response()->json(['message' => 'Post soft-deleted']);
+    }
+
+    public function restore(Post $post)
+    {
+        $this->authorize('update', $post);
+        $post->restore();
+        return response()->json(['message' => 'Post restored']);
+    }
+
+
 }
