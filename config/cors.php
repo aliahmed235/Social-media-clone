@@ -8,7 +8,10 @@ return [
         'http://localhost:5173',
         'http://localhost:5174',
         'http://127.0.0.1:5175',
-        'http://localhost:5175'
+        'http://localhost:5175',
+        'http://localhost:5176',
+        'http://127.0.0.1:5176'
+
     ],
     'allowed_origins_patterns' => [],
     'allowed_headers' => ['*'],

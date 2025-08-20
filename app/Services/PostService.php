@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\DTO\PostInputDTO;
+use App\DTO;
 use App\Models\Post;
 use Illuminate\Support\Facades\DB;
 

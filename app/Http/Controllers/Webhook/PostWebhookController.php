@@ -1,10 +1,10 @@
 <?php
 namespace App\Http\Controllers\Webhook;
 
+use App\DTO;
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\DTO\PostInputDTO;
 use App\Services\PostService;
+use Illuminate\Http\Request;
 
 class PostWebhookController extends Controller
 {
@@ -17,7 +17,7 @@ class PostWebhookController extends Controller
 
     public function store(Request $request)
     {
-        $dto    = \App\DTO\PostInputDTO::fromRequest($request);
+        $dto    = DTO\Post\PostInputDTO::fromRequest($request);
 
         // New service method that handles idempotency logic
         $result = $this->service->createFromWebhook($dto);

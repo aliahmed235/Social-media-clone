@@ -4,9 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Post;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use App\Http\Requests\StorePostRequest;
-use App\Http\Requests\UpdatePostRequest;
 use App\Http\Resources\PostResource;
+use App\DTO\Post\PostInputDTO;
 
 class PostController extends Controller
 {
@@ -14,7 +13,6 @@ class PostController extends Controller
 
     public function index()
     {
-        // Include author (id, name, email) so FE can show the name
         return Post::with(['user:id,name,email'])
             ->latest()
             ->get(['id','user_id','title','body','deleted_at','created_at']);
@@ -22,7 +20,6 @@ class PostController extends Controller
 
     public function show(Post $post)
     {
-        // Load relation for single post as well
         $post->loadMissing(['user:id,name,email']);
         return $post->only(['id','user_id','title','body','deleted_at','created_at']) + [
                 'user' => [
@@ -32,24 +29,28 @@ class PostController extends Controller
                 ],
             ];
     }
-    public function store(StorePostRequest $request)
-    {
-        $post = Post::create([
-            'user_id' => $request->user()->id,
-            ...$request->validated(),
-        ]);
 
-        return (new PostResource($post))
-            ->response()
-            ->setStatusCode(201);
+    public function store(\Illuminate\Http\Request $request)
+    {
+        $dto = PostInputDTO::fromRequest($request);
+        $dto->validate();
+
+        // exclude any columns not in the posts table
+        $post = Post::create($dto->toArrayExcept(['external_event_id']));
+
+        return (new PostResource($post))->response()->setStatusCode(201);
     }
 
-    public function update(UpdatePostRequest $request, Post $post)
+    public function update(\Illuminate\Http\Request $request, Post $post)
     {
-        $post->update($request->validated());
-        return new PostResource($post);
-    }
+        $dto = PostInputDTO::fromRequest($request);
+        $dto->validate();
 
+        // don't change owner; also drop non-existing columns
+        $post->update($dto->toArrayExcept(['user_id','external_event_id']));
+
+        return new PostResource($post->fresh());
+    }
 
     public function destroy(Post $post)
     {
@@ -63,6 +64,4 @@ class PostController extends Controller
         $post->restore();
         return response()->json(['message' => 'Post restored']);
     }
-
-
 }

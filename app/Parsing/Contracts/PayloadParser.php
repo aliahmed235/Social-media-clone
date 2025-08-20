@@ -2,7 +2,7 @@
 namespace App\Parsing\Contracts;
 
 use Illuminate\Http\Request;
-use App\DTO\PostInputDTO;
+use App\DTO;
 
 interface PayloadParser {
     public function toDto(Request $request): PostInputDTO;

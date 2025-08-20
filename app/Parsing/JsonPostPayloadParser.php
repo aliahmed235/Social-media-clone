@@ -2,7 +2,7 @@
 namespace App\Parsing;
 
 use Illuminate\Http\Request;
-use App\DTO\PostInputDTO;
+use App\DTO;
 use App\Parsing\Contracts\PayloadParser;
 
 final class JsonPostPayloadParser implements PayloadParser
