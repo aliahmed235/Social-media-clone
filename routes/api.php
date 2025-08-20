@@ -1,15 +1,21 @@
 <?php
+// routes/api.php
+
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PostController;
 use App\Models\Post;
 
-// routes/api.php
 Route::post('/signup', [AuthController::class, 'signup']);
 Route::post('/login',  [AuthController::class, 'login']);
 
 Route::get('/posts',        [PostController::class, 'index']);
 Route::get('/posts/{post}', [PostController::class, 'show']);
+
+// Mount webhooks (public) — OUTSIDE Sanctum:
+Route::prefix('webhooks')->group(function () {
+    require base_path('routes/webhooks.php');
+});
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/posts', [PostController::class, 'store'])
@@ -25,5 +31,5 @@ Route::middleware('auth:sanctum')->group(function () {
         ->withTrashed()
         ->middleware('can:update,post');
 
-    Route::post('/logout', [AuthController::class, 'logout']); // in group, no extra middleware needed
+    Route::post('/logout', [AuthController::class, 'logout']);
 });

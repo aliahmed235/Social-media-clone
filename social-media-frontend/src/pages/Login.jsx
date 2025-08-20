@@ -1,57 +1,40 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import api from "../api";
-import { setAuth } from "../auth";
+import { useState } from 'react'
+import { useNavigate, Link } from 'react-router-dom'
+import { api } from '../api.js'
+import { setAuth } from '../auth'
 
-export default function Login() {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [msg, setMsg] = useState("");
-    const [err, setErr] = useState("");
-    const [loading, setLoading] = useState(false);
-    const navigate = useNavigate();
+export default function Login(){
+    const [email, setEmail] = useState('')
+    const [password, setPassword] = useState('')
+    const [error, setError] = useState(null)
+    const navigate = useNavigate()
 
-    async function submit(e) {
-        e.preventDefault();
-        setErr(""); setMsg("");
-        if (!email || !password) return setErr("Email and password are required.");
-        try {
-            setLoading(true);
-            const { data } = await api.post("/login", { email, password }); // { user, token }
-            setAuth(data.user, data.token);
-            setMsg("Logged in");
-            navigate("/");
-        } catch (e) {
-            const status = e?.response?.status;
-            if (status === 401) setErr("Invalid credentials.");
-            else if (status === 422) setErr("Please check the email/password format.");
-            else setErr("Network or server error. Try again.");
-            console.error(e);
-        } finally {
-            setLoading(false);
+    const submit = async (e) => {
+        e.preventDefault()
+        setError(null)
+        try{
+            const { data } = await api.post('/login', { email, password })
+            const user = data?.user || data?.data?.user || null
+            const token = data?.token || data?.data?.token || data?.access_token
+            if (user && token){ setAuth(user, token); navigate('/') }
+            else setError('Unexpected response from server.')
+        }catch(err){
+            setError(err?.response?.data?.message || 'Invalid credentials.')
         }
     }
 
     return (
-        <main className="container">
-            <div className="grid">
-                <section className="card">
-                    <div className="card-inner">
-                        <h2>Login</h2>
-                        <form className="form" onSubmit={submit}>
-                            <input className="input" placeholder="Email" type="email"
-                                   value={email} onChange={e=>setEmail(e.target.value)} autoComplete="email" />
-                            <input className="input" placeholder="Password" type="password"
-                                   value={password} onChange={e=>setPassword(e.target.value)} autoComplete="current-password" />
-                            <button className="btn primary" type="submit" disabled={loading}>
-                                {loading ? "Logging in..." : "Login"}
-                            </button>
-                        </form>
-                        {msg && <p style={{ color: "var(--accent-2)", marginTop: 10 }}>{msg}</p>}
-                        {err && <p style={{ color: "crimson", marginTop: 10 }}>{err}</p>}
-                    </div>
-                </section>
+        <div className="container">
+            <div className="card p-5" style={{maxWidth:'520px', margin:'6vh auto'}}>
+                <h2 style={{marginTop:0}}>Welcome back</h2>
+                {error && <div className="small" style={{color:'var(--danger)'}}>{error}</div>}
+                <form className="grid" onSubmit={submit}>
+                    <input className="input" type="email" placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} required />
+                    <input className="input" type="password" placeholder="Password" value={password} onChange={e=>setPassword(e.target.value)} required />
+                    <button className="btn" type="submit">Log in</button>
+                    <div className="small">No account? <Link to="/signup">Create one</Link></div>
+                </form>
             </div>
-        </main>
-    );
+        </div>
+    )
 }

@@ -1,36 +1,18 @@
-import axios from "axios";
+import axios from 'axios'
+import { getToken, clearToken } from './auth.js'
 
-// Prefer Vite proxy in dev (no CORS). Fallback to env/base for prod.
-const baseURL =
-    (import.meta.env.MODE === "development" ? "/api" : null) ||
-    import.meta.env.VITE_API_BASE ||
-    "http://127.0.0.1:8000/api";
+const baseURL = (import.meta?.env?.VITE_API_BASE_URL || 'http://127.0.0.1:8000') + '/api'
+export const api = axios.create({ baseURL })
 
-const api = axios.create({
-    baseURL,
-    headers: { Accept: "application/json" },
-});
+api.interceptors.request.use((config) => {
+    const token = getToken()
+    if (token) config.headers.Authorization = `Bearer ${token}`
+    return config
+})
 
-// Attach Sanctum Personal Access Token
-api.interceptors.request.use((cfg) => {
-    const token = localStorage.getItem("token");
-    cfg.headers = cfg.headers ?? {};
-    if (token) cfg.headers.Authorization = `Bearer ${token}`;
-    return cfg;
-});
-
-// Basic global error handling
-api.interceptors.response.use(
-    (res) => res,
-    (err) => {
-        const s = err?.response?.status;
-        if (s === 401) {
-            localStorage.removeItem("token");
-            localStorage.removeItem("user");
-        }
-        if (s === 403) alert("Forbidden");
-        return Promise.reject(err);
+api.interceptors.response.use(r => r, (error) => {
+    if (error?.response?.status === 401) {
+        clearToken()
     }
-);
-
-export default api;
+    return Promise.reject(error)
+})

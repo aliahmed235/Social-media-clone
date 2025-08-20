@@ -1,8 +1,8 @@
 {
     "info": {
-        "name": "Social Media Clone API (Sanctum, Policies, Soft Delete)",
+        "name": "Social Media Clone API (Sanctum, Policies, Soft Delete, Webhook DTO + Signed)",
         "_postman_id": "3b6d8b3a-7c9f-4c34-9a0b-aaa000111222",
-        "description": "Laravel Sanctum Token Auth — Signup, Login (captures token), Create Post (captures id), List/Show, Update, Delete (soft), Restore.",
+        "description": "Laravel Sanctum Token Auth — Signup, Login (captures token), Create Post (captures id), List/Show, Update, Delete (soft), Restore, Webhook Post with DTO mapping and HMAC signature headers.",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "item": [
@@ -41,8 +41,8 @@
                 },
                 "url": {
                     "raw": "{{baseUrl}}/api/signup",
-                    "host": [ "{{baseUrl}}" ],
-                    "path": [ "api", "signup" ]
+                    "host": ["{{baseUrl}}"],
+                    "path": ["api", "signup"]
                 }
             },
             "response": []
@@ -82,8 +82,8 @@
                 },
                 "url": {
                     "raw": "{{baseUrl}}/api/login",
-                    "host": [ "{{baseUrl}}" ],
-                    "path": [ "api", "login" ]
+                    "host": ["{{baseUrl}}"],
+                    "path": ["api", "login"]
                 }
             },
             "response": []
@@ -100,7 +100,6 @@
                             "pm.test('Status is 201 or 200', function () {",
                             "  pm.expect(pm.response.code).to.be.oneOf([200,201]);",
                             "});",
-                            "// Try to capture ID from common response shapes",
                             "let id = json.id || (json.post && json.post.id) || (Array.isArray(json) && json[0] && json[0].id) || null;",
                             "if (id) {",
                             "  pm.collectionVariables.set('id', id);",
@@ -123,8 +122,8 @@
                 },
                 "url": {
                     "raw": "{{baseUrl}}/api/posts",
-                    "host": [ "{{baseUrl}}" ],
-                    "path": [ "api", "posts" ]
+                    "host": ["{{baseUrl}}"],
+                    "path": ["api", "posts"]
                 }
             },
             "response": []
@@ -133,13 +132,11 @@
             "name": "List Posts",
             "request": {
                 "method": "GET",
-                "header": [
-                    { "key": "Accept", "value": "application/json" }
-                ],
+                "header": [{ "key": "Accept", "value": "application/json" }],
                 "url": {
                     "raw": "{{baseUrl}}/api/posts",
-                    "host": [ "{{baseUrl}}" ],
-                    "path": [ "api", "posts" ]
+                    "host": ["{{baseUrl}}"],
+                    "path": ["api", "posts"]
                 }
             },
             "response": []
@@ -148,13 +145,11 @@
             "name": "Show Post (by {{id}})",
             "request": {
                 "method": "GET",
-                "header": [
-                    { "key": "Accept", "value": "application/json" }
-                ],
+                "header": [{ "key": "Accept", "value": "application/json" }],
                 "url": {
                     "raw": "{{baseUrl}}/api/posts/{{id}}",
-                    "host": [ "{{baseUrl}}" ],
-                    "path": [ "api", "posts", "{{id}}" ]
+                    "host": ["{{baseUrl}}"],
+                    "path": ["api", "posts", "{{id}}"]
                 }
             },
             "response": []
@@ -174,8 +169,8 @@
                 },
                 "url": {
                     "raw": "{{baseUrl}}/api/posts/{{id}}",
-                    "host": [ "{{baseUrl}}" ],
-                    "path": [ "api", "posts", "{{id}}" ]
+                    "host": ["{{baseUrl}}"],
+                    "path": ["api", "posts", "{{id}}"]
                 }
             },
             "response": []
@@ -190,8 +185,8 @@
                 ],
                 "url": {
                     "raw": "{{baseUrl}}/api/posts/{{id}}",
-                    "host": [ "{{baseUrl}}" ],
-                    "path": [ "api", "posts", "{{id}}" ]
+                    "host": ["{{baseUrl}}"],
+                    "path": ["api", "posts", "{{id}}"]
                 }
             },
             "response": []
@@ -206,8 +201,52 @@
                 ],
                 "url": {
                     "raw": "{{baseUrl}}/api/posts/{{id}}/restore",
-                    "host": [ "{{baseUrl}}" ],
-                    "path": [ "api", "posts", "{{id}}", "restore" ]
+                    "host": ["{{baseUrl}}"],
+                    "path": ["api", "posts", "{{id}}", "restore"]
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "Webhook: Create Post (Signed)",
+            "event": [
+                {
+                    "listen": "prerequest",
+                    "script": {
+                        "exec": [
+                            "// Build timestamp (seconds) and raw body string",
+                            "const timestamp = Math.floor(Date.now() / 1000).toString();",
+                            "const rawBody = pm.request.body && pm.request.body.raw ? pm.request.body.raw : '';",
+                            "",
+                            "// Secret must match your .env PARTNER_WEBHOOK_SECRET",
+                            "const secret = pm.collectionVariables.get('webhook_secret') || 'superlongrandomsharedsecret';",
+                            "",
+                            "// Compute HMAC-SHA256 over \"{timestamp}.{rawBody}\"",
+                            "const payload = `${timestamp}.${rawBody}`;",
+                            "const signature = CryptoJS.HmacSHA256(payload, secret).toString(CryptoJS.enc.Hex);",
+                            "",
+                            "// Set/overwrite headers",
+                            "pm.request.headers.upsert({ key: 'X-Webhook-Timestamp', value: timestamp });",
+                            "pm.request.headers.upsert({ key: 'X-Webhook-Signature', value: signature });"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    { "key": "Accept", "value": "application/json" },
+                    { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"title\": \"Webhook Test Post\",\n  \"body\": \"This post came from a webhook.\",\n  \"user_id\": 1,\n  \"source\": \"partner\",\n  \"external_event_id\": \"evt-12345\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/api/webhooks/posts",
+                    "host": ["{{baseUrl}}"],
+                    "path": ["api", "webhooks", "posts"]
                 }
             },
             "response": []
@@ -222,8 +261,8 @@
                 ],
                 "url": {
                     "raw": "{{baseUrl}}/api/logout",
-                    "host": [ "{{baseUrl}}" ],
-                    "path": [ "api", "logout" ]
+                    "host": ["{{baseUrl}}"],
+                    "path": ["api", "logout"]
                 }
             },
             "response": []
@@ -232,6 +271,7 @@
     "variable": [
         { "key": "baseUrl", "value": "http://127.0.0.1:8000" },
         { "key": "token", "value": "" },
-        { "key": "id", "value": "" }
+        { "key": "id", "value": "" },
+        { "key": "webhook_secret", "value": "superlongrandomsharedsecret" }
     ]
 }

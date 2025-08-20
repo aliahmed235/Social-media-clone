@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\VerifyWebhookSignature;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -14,9 +15,12 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->statefulApi();
-
-        // Enable CORS for API
         $middleware->append(HandleCors::class);
+
+        // 👇 Add this alias (name it whatever you like)
+        $middleware->alias([
+            'verify.webhook' => VerifyWebhookSignature::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

@@ -14,12 +14,23 @@ class PostController extends Controller
 
     public function index()
     {
-        return PostResource::collection(Post::latest()->paginate(10));
+        // Include author (id, name, email) so FE can show the name
+        return Post::with(['user:id,name,email'])
+            ->latest()
+            ->get(['id','user_id','title','body','deleted_at','created_at']);
     }
 
     public function show(Post $post)
     {
-        return new PostResource($post);
+        // Load relation for single post as well
+        $post->loadMissing(['user:id,name,email']);
+        return $post->only(['id','user_id','title','body','deleted_at','created_at']) + [
+                'user' => [
+                    'id'    => $post->user->id,
+                    'name'  => $post->user->name,
+                    'email' => $post->user->email,
+                ],
+            ];
     }
     public function store(StorePostRequest $request)
     {

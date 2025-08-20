@@ -11,7 +11,8 @@ class Post extends Model
     use HasFactory, SoftDeletes; // ⬅️ add SoftDeletes
 
     // Allow mass assignment (add image here if you use it)
-    protected $fillable = ['user_id', 'title', 'body'];
+    protected $fillable = ['user_id', 'title', 'body', 'source'];
+
 
     public function user()
     {

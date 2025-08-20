@@ -7,15 +7,18 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class PostResource extends JsonResource
 {
-    public function toArray($request): array
+    public function toArray($request)
     {
         return [
-            'id'      => $this->id,
-            'title'   => $this->title,
-            'body'    => $this->body,
-            'user_id' => $this->user_id,
-            'created' => $this->created_at,
-            'updated' => $this->updated_at,
+            'id' => $this->id,
+            'title' => $this->title,
+            'body' => $this->body,
+            'created_at' => $this->created_at,
+            'user' => [
+                'id' => $this->user->id,
+                'name' => $this->user->name,
+                'email' => $this->user->email,
+            ],
         ];
     }
 }
