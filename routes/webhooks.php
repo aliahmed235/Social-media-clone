@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Webhook\PostWebhookController;
+use App\Http\Controllers\PostWebhookController;
 
-Route::post('/posts', [PostWebhookController::class, 'store'])
-    ->middleware('verify.webhook');
+// Public webhook create endpoint (no Sanctum)
+Route::post('/posts', [PostWebhookController::class, 'store']);

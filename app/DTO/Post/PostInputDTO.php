@@ -1,45 +1,48 @@
 <?php
-// app/DTO/Post/PostInputDTO.php
+
 namespace App\DTO\Post;
 
 use App\DTO\BaseDTO;
 use Illuminate\Http\Request;
-use Illuminate\Support\Arr;
 
-final class PostInputDTO extends BaseDTO
+class PostInputDTO extends BaseDTO
 {
     public function __construct(
-        public ?string $title,           // was string
-        public ?string $body,            // was string
+        public ?string $title,
+        public ?string $body,
         public ?int    $userId,
         public string  $source,
         public ?string $externalEventId,
     ) {}
 
+    /** Construct DTO from HTTP request (normal app create) */
     public static function fromRequest(Request $request): self
     {
-        $userId = $request->input('user_id') ?? $request->user()?->id;
+        // For user-created posts, we trust the authenticated user, not client-sent user_id.
+        $user = $request->user();
 
         return new self(
-            title: $request->input('title'),                 // may be null
-            body:  $request->input('body'),                  // may be null
-            userId: $userId,
-            source: $request->input('source', 'internal'),
-            externalEventId: $request->input('external_event_id'),
+            title: $request->input('title'),
+            body:  $request->input('body'),
+            userId: $user?->id,          // inject server-side
+            source: 'app',               // tag the source
+            externalEventId: null
         );
     }
 
-    public static function fromArray(array $data): self
+    /** Construct DTO from an array (handy for tests / services) */
+    public static function fromArray(array $a): self
     {
         return new self(
-            title: Arr::get($data, 'title'),                 // remove (string) cast
-            body:  Arr::get($data, 'body'),                  // remove (string) cast
-            userId: Arr::get($data, 'user_id'),
-            source: Arr::get($data, 'source', 'internal'),
-            externalEventId: Arr::get($data, 'external_event_id'),
+            title: $a['title'] ?? null,
+            body:  $a['body']  ?? null,
+            userId: $a['user_id'] ?? $a['userId'] ?? null,
+            source: $a['source'] ?? 'app',
+            externalEventId: $a['external_event_id'] ?? $a['externalEventId'] ?? null
         );
     }
 
+    /** Convert DTO to array for persistence / validation */
     public function toArray(): array
     {
         return [
@@ -51,13 +54,15 @@ final class PostInputDTO extends BaseDTO
         ];
     }
 
+    /** Validation rules (works for both webhook + app because we fill user_id/source) */
     public static function rules(): array
     {
         return [
-            'title'             => ['required','string','min:2'],
-            'body'              => ['required','string','min:2'],
-            'user_id'           => ['nullable','integer','exists:users,id'],
-            'source'            => ['required','string','in:internal,partner'],
+            'title'             => 'required|string|min:2',
+            'body'              => 'required|string|min:2',
+            'user_id'           => 'required|integer|exists:users,id',
+            'source'            => 'required|string',
+            'external_event_id' => 'nullable|string',
         ];
     }
 }

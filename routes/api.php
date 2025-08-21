@@ -1,5 +1,4 @@
 <?php
-// routes/api.php
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
@@ -12,12 +11,8 @@ Route::post('/login',  [AuthController::class, 'login']);
 Route::get('/posts',        [PostController::class, 'index']);
 Route::get('/posts/{post}', [PostController::class, 'show']);
 
-// Mount webhooks (public) — OUTSIDE Sanctum:
-Route::prefix('webhooks')->group(function () {
-    require base_path('routes/webhooks.php');
-});
-
 Route::middleware('auth:sanctum')->group(function () {
+    // ✅ CREATE — restore the missing POST route
     Route::post('/posts', [PostController::class, 'store'])
         ->middleware('can:create,' . Post::class);
 
@@ -28,8 +23,5 @@ Route::middleware('auth:sanctum')->group(function () {
         ->middleware('can:delete,post');
 
     Route::post('/posts/{post}/restore', [PostController::class, 'restore'])
-        ->withTrashed()
         ->middleware('can:update,post');
-
-    Route::post('/logout', [AuthController::class, 'logout']);
 });

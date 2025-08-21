@@ -6,9 +6,10 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Resources\PostResource;
-
+use Illuminate\Support\Facades\Hash;
 class AuthController extends Controller
 {
+
     public function signup(Request $request)
     {
         $data = $request->validate([
@@ -17,11 +18,17 @@ class AuthController extends Controller
             'password' => ['required','string','min:8'],
         ]);
 
-        $user  = User::create($data);
+        $user = User::create([
+            'name'     => $data['name'],
+            'email'    => $data['email'],
+            'password' => Hash::make($data['password']), // ✅ hash!
+        ]);
+
         $token = $user->createToken('api-token')->plainTextToken;
 
         return response()->json(['user' => $user, 'token' => $token], 201);
     }
+
 
     public function login(Request $request)
     {

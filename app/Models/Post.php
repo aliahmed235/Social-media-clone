@@ -8,14 +8,12 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Post extends Model
 {
-    use HasFactory, SoftDeletes; // ⬅️ add SoftDeletes
+    use HasFactory, SoftDeletes;
 
-    // Allow mass assignment (add image here if you use it)
-    protected $fillable = ['user_id', 'title', 'body', 'source'];
+    protected $fillable = ['user_id','title','body','source'];
 
-    protected $guarded = [];
     public function user()
     {
-        return $this->belongsTo(\App\Models\User::class);
+        return $this->belongsTo(User::class); // same namespace: App\Models\User
     }
 }
